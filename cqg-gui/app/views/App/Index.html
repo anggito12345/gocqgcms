@@ -1,0 +1,222 @@
+{{set . "title" "Home"}}
+{{template "header.html" .}}
+<div id="example">
+  <div class="container-lg p-0 m-0" style="max-width: 100%;"  >
+    <div class="row m-0">
+      <div class="col-4 p-0">
+        <div class="card" style="min-height: 100vh">
+          <div class="card-header v-align-middle">
+            Request List
+          </div>
+          <div class="card-body">
+              <div id="treeview-kendo"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-8 p-0" >
+        <div class="row m-0">
+          <div class="col-12 p-0">
+            <div class="card" style="min-height: 100vh">
+              <div class="card-header">Log:</div>
+              <div class="card-body" id="log-box" style="background:black;color:white"></div>
+            </div>
+          </div>
+        </div>       
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .pull-right {
+      float: right;
+    }
+
+    .pull-left {
+      float: left;
+    }
+
+    .v-align-middle {
+      vertical-align: middle;
+    }
+  </style>
+    
+  <script id="treeview" type="text/kendo-ui-template">
+
+      # if (!item.items && item.spriteCssClass) { #
+        #: item.text #
+        <a class='k-icon k-i-close-outline kendo' href='\#'></a>             
+      # } else if (item.isinput){ #      
+        <label style="width: 200px">#: item.text #</label>
+        <input type="text" name="#: item.isinput #" data-type="#: item.type #" value="#: item.default ? item.default : '' #"/>
+       # } else if (item.issendable){ #      
+        #: item.text #
+        <button class='btn btn-sm btn-primary' onclick='sendmessage("#: item.sendas #")'>Send</button>
+      # } else { #
+      <span class="k-sprite folder"></span>
+      #: item.text #
+      # } #
+  </script>
+
+  <script>
+
+      function makeid(length) {
+        var result           = '';
+        var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        var charactersLength = characters.length;
+        for ( var i = 0; i < length; i++ ) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return result;
+      }
+
+      //generate id
+
+      let model = {
+        data: {
+          createcustomer: {
+            signal: 4,
+            data: {
+              name: '',
+              legal_type: '',
+              brokerage_id: ''
+            }
+          },
+          createaccount: {
+            signal: 5,
+            data: {
+              name: '',
+              customer_id: '',
+              currency: '',
+              brokerage_account_number: '',
+              account_type_id: '',
+              sales_series_id: '',
+              class: 1
+            }
+          },
+          createbalance: {
+            signal: 6,
+            data: {
+              account_id: '',
+              currency: '',
+              end_account_balance: 0
+            }
+          },
+          balanceinfo: {
+            signal: 8,
+            data: {
+              account_id: ''
+            }
+          },
+          updatebalance: {
+            signal: 6,
+            data: {
+              balance_id: '',
+              end_account_balance: 0
+            }
+          },
+        }
+      }
+      
+
+      $("#treeview-kendo").kendoTreeView({
+          template: kendo.template($("#treeview").html()),
+          dataSource: [{
+              id: 1, text: "CQG CMS API", expanded: true, spriteCssClass: "rootfolder", items: [
+                  { id: 2, text: "Create Customer", issendable: true, sendas: 'createcustomer', items: [
+                    { id: 7, text: "Name", isinput: 'createcustomer-name'},
+                    { id: 7, text: "Legal Type", isinput: 'createcustomer-legal_type', type: 'int'},
+                    { id: 7, text: "Brokerage Id", isinput: 'createcustomer-brokerage_id', type: 'string'}
+                  ] },
+                  { id: 3, text: "Create Account", issendable: true, sendas: 'createaccount',  items: [
+                    { id: 7, text: "Name", isinput: 'createaccount-name'},
+                    { id: 7, text: "Customer ID", isinput: 'createaccount-customer_id', default: '16894552'},
+                    { id: 7, text: "Currency", isinput: 'createaccount-currency', default: 'SGD'},
+                    { id: 7, text: "Brokerage Account Number", isinput: 'createaccount-brokerage_account_number'},
+                    { id: 7, text: "Account Type", isinput: 'createaccount-account_type_id', default: '0'},
+                    { id: 7, text: "Sales Series ID", isinput: 'createaccount-sales_series_id', type: 'string', default: '2100467'},
+                  ]},
+                  { 
+                    id: 4, text: "Create Balance",issendable: true, sendas: 'createbalance',  items: [                    
+                    { id: 7, text: "Customer ID", isinput: 'createbalance-account_id', default: ''},
+                    { id: 7, text: "Currency", isinput: 'createbalance-currency', default: 'SGD'},
+                    { id: 7, text: "End Cash Balance", isinput: 'createbalance-end_account_balance', default: 0}
+                  ] },
+                  { id: 5, text: "Update Balance", issendable: true, sendas: 'updatebalance', items: [                    
+                    { id: 7, text: "Balance ID", isinput: 'updatebalance-balance_id', default: ''},
+                    { id: 7, text: "End Cash Balance", isinput: 'updatebalance-end_account_balance', type: 'int'},
+                  ] },
+                  { id: 6, text: "Info Balance", issendable: true, sendas: 'balanceinfo',  items: [                    
+                    { id: 7, text: "Account ID", isinput: 'balanceinfo-account_id', default: '', type: 'int'}
+                  ] },                    
+              ]
+          }],
+          loadOnDemand: true
+      });
+
+      $(document).on("click", ".k-icon.k-i-close-outline.kendo", function (e) {
+          e.preventDefault();
+          var treeview = $("#treeview-kendo").data("kendoTreeView");
+          treeview.remove($(this).closest(".k-item"));
+      });
+  </script>
+</div>
+
+<div class="container">
+  <div class="row">
+    <div class="span6">
+      {{template "flash.html" .}}
+    </div>
+  </div>
+</div>
+
+<script>
+var ws = new WebSocket("ws://localhost:8080/cqg-hub?room="+makeid(20));
+ws.onopen = function (event) {
+};
+
+function sendmessage(to) {  
+  //serialize value
+
+  serializeValue(to)
+
+  ws.send(JSON.stringify(model.data[to]))
+}
+
+
+ws.onmessage = function(event,dt) {
+   if (event.data instanceof Blob) {
+        reader = new FileReader();
+
+        reader.onload = () => {
+            $("#log-box").html($("#log-box").html() + "<br/>" + reader.result)
+        };
+
+        reader.readAsText(event.data);
+
+        
+    } else {
+        $("#log-box").html($("#log-box").html() + "<br/>" + event.data)
+    }
+};
+
+function serializeValue(toName) {
+  let fields = Object.keys(model.data[toName].data)
+  for(let i = 0 ; i < fields.length; i++) {
+    let input = $(`input[name=${toName}-${fields[i]}]`)
+    console.log(input)
+    let value = input.val()
+    if (input.attr('data-type') == 'int') {
+      value = parseInt(value)
+    } 
+    model.data[toName].data[fields[i]] = value
+  }
+
+}
+
+
+$(document).ready(function() {
+  $('.treeview').mdbTreeview();
+});
+</script>
+
+{{template "footer.html" .}}
